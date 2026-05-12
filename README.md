@@ -1,4 +1,4 @@
-# Diffie Hellman and Digital Signatires
+# Diffie Hellman and Digital Signatures
 
 
 ## Setup & Installation (Windows PowerShell)
@@ -40,9 +40,54 @@ python server.py
 
 ```
 
-### 6. Launch the Client (in a second terminal)
+### 6. Launch the Client 
 
 ```powershell
 python client.py
 
 ```
+
+
+### macOS / Linux (Terminal)
+
+### 1. Navigate to your project directory
+```bash
+cd /path/.../.../...
+
+```
+
+
+### 2. Create a virtual environment
+```bash
+python3 -m venv .venv
+
+```
+
+
+### 3. Activate the virtual environment
+```bash
+source .venv/bin/activate
+
+```
+
+
+### 4. Install dependencies
+```bash
+pip install -r requirements.txt
+
+```
+
+
+### 5. Launch the Server
+```bash
+python3 server.py
+
+```
+
+
+### 6. Launch the Client
+```bash
+python3 client.py
+
+```
+
