@@ -1,0 +1,33 @@
+# --- Virtual Environments ---
+venv/
+.venv/
+env/
+bin/
+lib/
+include/
+
+# --- Python Cache & Compiled Files ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# --- Environment Variables (Security!) ---
+.env
+.flaskenv
+
+# --- Distribution / Packaging ---
+dist/
+build/
+*.egg-info/
+egg-info/
+
+# --- IDEs & Editors ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Operating System Files ---
+.DS_Store
+Thumbs.db
