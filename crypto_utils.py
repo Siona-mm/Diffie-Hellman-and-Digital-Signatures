@@ -60,3 +60,25 @@ class MessageCipher:
         unpadder = padding.PKCS7(128).unpadder()
         message = unpadder.update(padded_data) + unpadder.finalize()
         return message.decode()
+    
+    # 1. Gjenerimi i çelësave për dy persona
+private_A = CryptoCore.generate_ecdh_keypair()
+public_A = private_A.public_key()
+
+private_B = CryptoCore.generate_ecdh_keypair()
+public_B = private_B.public_key()
+
+# 2. Ana dhe Beni krijojnë të njëjtin çelës sekret (shared_key)
+key_for_A = CryptoCore.generate_shared_secret(private_A, public_B)
+key_for_B = CryptoCore.generate_shared_secret(private_B, public_A)
+
+# Vërtetimi: key_for_A == key_for_B (duhet të jenë identikë)
+
+# 3. Enkriptimi i një mesazhi
+mesazhi_origjinal = "Tung, ky është një mesazh sekret!"
+koduar = MessageCipher.encrypt_message(mesazhi_origjinal, key_for_A)
+print(f"Mesazhi i enkriptuar: {koduar}")
+
+# 4. Dekriptimi
+dekoduar = MessageCipher.decrypt_message(koduar, key_for_B)
+print(f"Mesazhi i dekriptuar: {dekoduar}")
