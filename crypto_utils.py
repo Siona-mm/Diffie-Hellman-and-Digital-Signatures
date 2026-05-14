@@ -50,3 +50,17 @@ class CryptoUtils:
             key_size=2048,
             backend=default_backend()
         )
+
+    @staticmethod
+    def sign_message(message, private_key):
+        signature = private_key.sign(
+            message.encode(),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return base64.b64encode(signature).decode()
+
+    
