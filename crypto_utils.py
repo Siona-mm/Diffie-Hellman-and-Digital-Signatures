@@ -26,3 +26,37 @@ class CryptoCore:
         ).derive(shared_key)
         return derived_key
     
+    from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives import padding
+
+class MessageCipher:
+    @staticmethod
+    def encrypt_message(message, key):
+        iv = os.urandom(16)  # Initialization Vector unik për çdo enkriptim
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        encryptor = cipher.encryptor()
+        
+        # Shtohet padding (PKCS7) që mesazhi të jetë i plotësuar për bllokun 128-bit
+        padder = padding.PKCS7(128).padder()
+        padded_data = padder.update(message.encode()) + padder.finalize()
+        
+        ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+        # Bashkojmë IV dhe ciphertext në një string Base64
+        return base64.b64encode(iv + ciphertext).decode()
+
+    @staticmethod
+    def decrypt_message(encrypted_message, key):
+        data = base64.b64decode(encrypted_message)
+        iv = data[:16]
+        ciphertext = data[16:]
+        
+        cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
+        decryptor = cipher.decryptor()
+        
+        # Dekriptimi
+        padded_data = decryptor.update(ciphertext) + decryptor.finalize()
+        
+        # Heqja e padding
+        unpadder = padding.PKCS7(128).unpadder()
+        message = unpadder.update(padded_data) + unpadder.finalize()
+        return message.decode()
