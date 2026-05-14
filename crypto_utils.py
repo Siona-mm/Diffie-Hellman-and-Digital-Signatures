@@ -63,4 +63,20 @@ class CryptoUtils:
         )
         return base64.b64encode(signature).decode()
 
+    @staticmethod
+    def verify_signature(message, signature, public_key):
+        try:
+            public_key.verify(
+                base64.b64decode(signature),
+                message.encode(),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            return True
+        except:
+            return False
+
     
