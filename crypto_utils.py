@@ -50,3 +50,61 @@ class CryptoUtils:
             key_size=2048,
             backend=default_backend()
         )
+
+    @staticmethod
+    def sign_message(message, private_key):
+        signature = private_key.sign(
+            message.encode(),
+            padding.PSS(
+                mgf=padding.MGF1(hashes.SHA256()),
+                salt_length=padding.PSS.MAX_LENGTH
+            ),
+            hashes.SHA256()
+        )
+        return base64.b64encode(signature).decode()
+
+    @staticmethod
+    def verify_signature(message, signature, public_key):
+        try:
+            public_key.verify(
+                base64.b64decode(signature),
+                message.encode(),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            return True
+        except:
+            return False
+
+    @staticmethod
+    def serialize_public_key(public_key):
+        return public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode()
+
+   
+    @staticmethod
+    def deserialize_public_key(pem_data):
+        return serialization.load_pem_public_key(
+            pem_data.encode(),
+            backend=default_backend()
+        )
+
+    
+    @staticmethod
+    def serialize_ecdh_public_key(public_key):
+        return public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode()
+
+    @staticmethod
+    def deserialize_ecdh_public_key(pem_data):
+        return serialization.load_pem_public_key(
+            pem_data.encode(),
+            backend=default_backend()
+        )
