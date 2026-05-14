@@ -87,3 +87,9 @@ class CryptoUtils:
         ).decode()
 
    
+    @staticmethod
+    def deserialize_public_key(pem_data):
+        return serialization.load_pem_public_key(
+            pem_data.encode(),
+            backend=default_backend()
+        )
