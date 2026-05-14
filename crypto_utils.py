@@ -93,3 +93,18 @@ class CryptoUtils:
             pem_data.encode(),
             backend=default_backend()
         )
+
+    
+    @staticmethod
+    def serialize_ecdh_public_key(public_key):
+        return public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        ).decode()
+
+    @staticmethod
+    def deserialize_ecdh_public_key(pem_data):
+        return serialization.load_pem_public_key(
+            pem_data.encode(),
+            backend=default_backend()
+        )
