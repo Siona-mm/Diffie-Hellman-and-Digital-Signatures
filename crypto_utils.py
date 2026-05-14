@@ -1,8 +1,8 @@
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives.asymmetric import ec, rsa, padding
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.primitives import padding as sym_padding
 from cryptography.hazmat.backends import default_backend
 import os
 import base64
@@ -29,46 +29,24 @@ class CryptoUtils:
         iv = os.urandom(16)
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
         encryptor = cipher.encryptor()
-        
-        # Përdorimi i PKCS7 padding (më i sigurt se manuali me \0)
-        padder = sym_padding.PKCS7(128).padder()
-        padded_data = padder.update(message.encode()) + padder.finalize()
-        
-        ciphertext = encryptor.update(padded_data) + encryptor.finalize()
+        padded_message = message.encode() + b'\0' * (16 - len(message.encode()) % 16)
+        ciphertext = encryptor.update(padded_message) + encryptor.finalize()
         return base64.b64encode(iv + ciphertext).decode()
 
     @staticmethod
     def decrypt_message(encrypted_message, key):
         data = base64.b64decode(encrypted_message)
-        iv, ciphertext = data[:16], data[16:]
-        
+        iv = data[:16]
+        ciphertext = data[16:]
         cipher = Cipher(algorithms.AES(key), modes.CBC(iv), backend=default_backend())
         decryptor = cipher.decryptor()
         padded_message = decryptor.update(ciphertext) + decryptor.finalize()
-        
-        # Heqja e padding
-        unpadder = sym_padding.PKCS7(128).unpadder()
-        message = unpadder.update(padded_message) + unpadder.finalize()
-        return message.decode()
+        return padded_message.rstrip(b'\0').decode()
 
-# --- EKZEKUTIMI I KODIT ---
-
-# 1. Gjenerimi i çelësave (Përdorim emrin e saktë të klasës: CryptoUtils)
-private_A = CryptoUtils.generate_ecdh_keypair()
-public_A = private_A.public_key()
-
-private_B = CryptoUtils.generate_ecdh_keypair()
-public_B = private_B.public_key()
-
-# 2. Krijimi i sekretit të përbashkët
-key_for_A = CryptoUtils.generate_shared_secret(private_A, public_B)
-key_for_B = CryptoUtils.generate_shared_secret(private_B, public_A)
-
-# 3. Enkriptimi
-mesazhi_origjinal = "Tung, ky është një mesazh sekret!"
-koduar = CryptoUtils.encrypt_message(mesazhi_origjinal, key_for_A)
-print(f"Mesazhi i enkriptuar: {koduar}")
-
-# 4. Dekriptimi
-dekoduar = CryptoUtils.decrypt_message(koduar, key_for_B)
-print(f"Mesazhi i dekriptuar: {dekoduar}")
+    @staticmethod
+    def generate_rsa_keypair():
+        return rsa.generate_private_key(
+            public_exponent=65537,
+            key_size=2048,
+            backend=default_backend()
+        )
