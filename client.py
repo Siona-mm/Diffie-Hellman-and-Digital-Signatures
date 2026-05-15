@@ -19,6 +19,7 @@ class SecureClient:
         print("="*80 + "\n")
         
         async with websockets.connect(uri) as websocket:
+            # Receive init
             print("[PHASE 1: KEY EXCHANGE INITIALIZATION]")
             print("[Step 1: Receiving Server's Public Keys]\n")
             
@@ -31,12 +32,14 @@ class SecureClient:
                 print(f"SERVER RSA PUBLIC KEY (2048-bit for Digital Signatures):\n{data['rsa_public_key']}")
                 print(f"\nSERVER ECDH PUBLIC KEY (P-256 Elliptic Curve for Key Exchange):\n{data['ecdh_public_key']}\n")
 
+                # Generate ECDH keys
                 print("[Step 2: Client Generating ECDH Keypair]\n")
                 self.ecdh_private_key = CryptoUtils.generate_ecdh_keypair()
                 self.ecdh_public_key = self.ecdh_private_key.public_key()
                 print(f"CLIENT ECDH PRIVATE KEY (P-256): Generated and kept secret")
                 print(f"CLIENT ECDH PUBLIC KEY (P-256): Generated\n")
 
+                # Send ECDH public key
                 print("[Step 3: Client Sending ECDH Public Key to Server]\n")
                 ecdh_public_pem = CryptoUtils.serialize_ecdh_public_key(self.ecdh_public_key)
                 print(f"CLIENT ECDH PUBLIC KEY SENT (P-256):\n{ecdh_public_pem}\n")
@@ -45,6 +48,7 @@ class SecureClient:
                     'ecdh_public_key': ecdh_public_pem
                 }))
 
+                # Generate shared key
                 print("\n[PHASE 2: SHARED SECRET ESTABLISHMENT]")
                 print("[Step 4: Client Deriving Shared Secret]")
                 print("✓ [Requirement: Diffie-Hellman] Computing shared secret using client private key + server public key\n")
@@ -53,14 +57,7 @@ class SecureClient:
                 print(f"Shared Secret Successfully Derived (hex):")
                 print(f"{shared_key_hex}\n")
 
-                print("\n[PHASE 2: SHARED SECRET ESTABLISHMENT]")
-                print("[Step 4: Client Deriving Shared Secret]")
-                print("✓ [Requirement: Diffie-Hellman] Computing shared secret using client private key + server public key\n")
-                self.shared_key = CryptoUtils.generate_shared_secret(self.ecdh_private_key, server_ecdh_public_key)
-                shared_key_hex = self.shared_key.hex()
-                print(f"Shared Secret Successfully Derived (hex):")
-                print(f"{shared_key_hex}\n")
-
+                # Receive welcome
                 print("\n[PHASE 3: MESSAGE INTEGRITY & AUTHENTICATION]")
                 print("[Step 5: Receiving Server's Signed Welcome Message]")
                 print("✓ [Requirement: Digital Signatures] Receiving encrypted + signed message from server\n")
@@ -88,3 +85,58 @@ class SecureClient:
                     else:
                         print("✗ Signature verification failed!")
                         return
+
+            # Start console interface
+            await self.console_interface(websocket)
+
+    async def console_interface(self, websocket):
+        async def receive_messages():
+            try:
+                async for message in websocket:
+                    data = json.loads(message)
+                    if data['type'] == 'message':
+                        encrypted_msg = data['message']
+                        signature = data['signature']
+                        print(f"\n[Message Received from Server]")
+                        print(f"Encrypted (Base64): {encrypted_msg[:80]}...")
+                        print(f"Signature (RSA-PSS): {signature[:80]}...")
+                        print(f"\n✓ [Requirement: Encrypted Communication] Decrypting with AES shared secret")
+                        print(f"✓ [Requirement: Digital Signatures] Verifying RSA-PSS signature")
+                        print(f"✓ [Requirement: Message Integrity] Checking SHA-256 digest\n")
+                        
+                        decrypted_msg = CryptoUtils.decrypt_message(encrypted_msg, self.shared_key)
+                        print(f"Decrypted Message: {decrypted_msg}")
+                        
+                        if CryptoUtils.verify_signature(decrypted_msg, signature, self.server_rsa_public_key):
+                            print("✓ Signature verified - Message authenticated (Non-Repudiation confirmed)")
+                        else:
+                            print("✗ Invalid signature - Message rejected!")
+            except:
+                pass
+
+        receive_task = asyncio.create_task(receive_messages())
+
+        while True:
+            command = await asyncio.get_event_loop().run_in_executor(None, input, "\n[Send Message] Client> ")
+            if command == "quit":
+                print("\n✓ Closing secure connection...")
+                break
+            elif command:
+                print(f"\n[ENCRYPTED COMMUNICATION PHASE]")
+                print(f"Original Message: {command}")
+                print(f"✓ [Requirement: Encrypted Communication] Encrypting with AES using shared secret\n")
+                encrypted = CryptoUtils.encrypt_message(command, self.shared_key)
+                print(f"Encrypted (Base64): {encrypted[:80]}...")
+                print(f"✓ Message Sent\n")
+                await websocket.send(json.dumps({
+                    'type': 'message',
+                    'message': encrypted
+                }))
+
+        receive_task.cancel()
+
+    
+           
+
+
+                    
