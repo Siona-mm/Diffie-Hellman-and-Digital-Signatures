@@ -36,3 +36,27 @@ class SecureClient:
                 self.ecdh_public_key = self.ecdh_private_key.public_key()
                 print(f"CLIENT ECDH PRIVATE KEY (P-256): Generated and kept secret")
                 print(f"CLIENT ECDH PUBLIC KEY (P-256): Generated\n")
+
+                print("[Step 3: Client Sending ECDH Public Key to Server]\n")
+                ecdh_public_pem = CryptoUtils.serialize_ecdh_public_key(self.ecdh_public_key)
+                print(f"CLIENT ECDH PUBLIC KEY SENT (P-256):\n{ecdh_public_pem}\n")
+                await websocket.send(json.dumps({
+                    'type': 'ecdh_exchange',
+                    'ecdh_public_key': ecdh_public_pem
+                }))
+
+                print("\n[PHASE 2: SHARED SECRET ESTABLISHMENT]")
+                print("[Step 4: Client Deriving Shared Secret]")
+                print("✓ [Requirement: Diffie-Hellman] Computing shared secret using client private key + server public key\n")
+                self.shared_key = CryptoUtils.generate_shared_secret(self.ecdh_private_key, server_ecdh_public_key)
+                shared_key_hex = self.shared_key.hex()
+                print(f"Shared Secret Successfully Derived (hex):")
+                print(f"{shared_key_hex}\n")
+
+                print("\n[PHASE 2: SHARED SECRET ESTABLISHMENT]")
+                print("[Step 4: Client Deriving Shared Secret]")
+                print("✓ [Requirement: Diffie-Hellman] Computing shared secret using client private key + server public key\n")
+                self.shared_key = CryptoUtils.generate_shared_secret(self.ecdh_private_key, server_ecdh_public_key)
+                shared_key_hex = self.shared_key.hex()
+                print(f"Shared Secret Successfully Derived (hex):")
+                print(f"{shared_key_hex}\n")
