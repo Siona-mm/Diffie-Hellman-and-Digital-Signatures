@@ -30,3 +30,9 @@ class SecureClient:
                 
                 print(f"SERVER RSA PUBLIC KEY (2048-bit for Digital Signatures):\n{data['rsa_public_key']}")
                 print(f"\nSERVER ECDH PUBLIC KEY (P-256 Elliptic Curve for Key Exchange):\n{data['ecdh_public_key']}\n")
+
+                print("[Step 2: Client Generating ECDH Keypair]\n")
+                self.ecdh_private_key = CryptoUtils.generate_ecdh_keypair()
+                self.ecdh_public_key = self.ecdh_private_key.public_key()
+                print(f"CLIENT ECDH PRIVATE KEY (P-256): Generated and kept secret")
+                print(f"CLIENT ECDH PUBLIC KEY (P-256): Generated\n")
