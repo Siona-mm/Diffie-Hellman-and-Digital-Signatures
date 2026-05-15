@@ -9,3 +9,24 @@ class SecureClient:
         self.server_rsa_public_key = None
         self.ecdh_private_key = None
         self.ecdh_public_key = None
+
+    async def connect(self):
+        uri = "ws://localhost:8765"
+        print("\n" + "="*80)
+        print("SECURE CLIENT-SERVER COMMUNICATION PROTOCOL")
+        print("="*80)
+        print("\nConnecting to server at", uri)
+        print("="*80 + "\n")
+        
+        async with websockets.connect(uri) as websocket:
+            print("[PHASE 1: KEY EXCHANGE INITIALIZATION]")
+            print("[Step 1: Receiving Server's Public Keys]\n")
+            
+            message = await websocket.recv()
+            data = json.loads(message)
+            if data['type'] == 'init':
+                self.server_rsa_public_key = CryptoUtils.deserialize_public_key(data['rsa_public_key'])
+                server_ecdh_public_key = CryptoUtils.deserialize_ecdh_public_key(data['ecdh_public_key'])
+                
+                print(f"SERVER RSA PUBLIC KEY (2048-bit for Digital Signatures):\n{data['rsa_public_key']}")
+                print(f"\nSERVER ECDH PUBLIC KEY (P-256 Elliptic Curve for Key Exchange):\n{data['ecdh_public_key']}\n")
